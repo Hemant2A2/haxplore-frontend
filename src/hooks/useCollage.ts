@@ -11,7 +11,7 @@ export const useCollage = (stageRef: React.RefObject<Konva.Stage>) => {
   const history = useRef<{ id: string; node: any }[][]>([]);
   const historyIndex = useRef<number>(-1);
 
-  // **🔹 Add Image**
+  // Add Image
   const addImage = (src: string) => {
     if (!stageRef.current) return;
     const id = `image-${Date.now()}`;
@@ -34,7 +34,7 @@ export const useCollage = (stageRef: React.RefObject<Konva.Stage>) => {
     };
   };
 
-  // **🔹 Add Text**
+  // Add Text
   const addText = (text: string) => {
     if (!stageRef.current) return;
     const id = `text-${Date.now()}`;
@@ -53,7 +53,7 @@ export const useCollage = (stageRef: React.RefObject<Konva.Stage>) => {
     saveHistory();
   };
 
-  // **🔹 Save History for Undo/Redo**
+  // Save History for Undo/Redo
   const saveHistory = () => {
     history.current = history.current.slice(0, historyIndex.current + 1);
     history.current.push([...elements]);
@@ -72,7 +72,7 @@ export const useCollage = (stageRef: React.RefObject<Konva.Stage>) => {
     setElements([...history.current[historyIndex.current]]);
   };
 
-  // **🔹 Delete Selected Element**
+  // Delete Selected Element
   const deleteSelected = () => {
     if (!selectedId) return;
     setElements((prev) => prev.filter((el) => el.id !== selectedId));
@@ -80,7 +80,7 @@ export const useCollage = (stageRef: React.RefObject<Konva.Stage>) => {
     saveHistory();
   };
 
-  // **🔹 Bring Forward / Send Backward**
+  //  Bring Forward / Send Backward
   const changeLayerPosition = (direction: "forward" | "backward") => {
     if (!selectedId) return;
     setElements((prev) => {
@@ -104,7 +104,7 @@ export const useCollage = (stageRef: React.RefObject<Konva.Stage>) => {
     });
   };
 
-  // **🔹 Animate Elements**
+  // Animate Elements
   const animateElement = (type: "bounce" | "fade" | "rotate" | "scale") => {
     setElements((prev) =>
       prev.map((el) => {
