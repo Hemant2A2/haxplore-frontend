@@ -6,7 +6,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./utils/ProtectedRoute";
 import DashBoard from "./pages/DashBoard";
-import WebSocketProvider from "./contexts/WebSocketContext";
+import { WebSocketProvider } from "./contexts/WebSocketContext";
 
 const App: React.FC = () => {
   return (
