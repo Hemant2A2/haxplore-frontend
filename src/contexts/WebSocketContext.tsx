@@ -1,24 +1,13 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 interface WebSocketContextProps {
   sendMessage: (message: any) => void;
-  addMessageListener: (callback: (message: any) => void) => void;
+  addMessageListener: (callback: (message: any) => void) => () => void;
 }
 
-const WebSocketContext = createContext<WebSocketContextProps | undefined>(
-  undefined
-);
+const WebSocketContext = createContext<WebSocketContextProps | undefined>(undefined);
 
-export const WebSocketProvider: React.FC<{
-  url: string;
-  children: React.ReactNode;
-}> = ({ url, children }) => {
+export const WebSocketProvider: React.FC<{ url: string; children: React.ReactNode }> = ({ url, children }) => {
   const socketRef = useRef<WebSocket | null>(null);
   const listenersRef = useRef<((message: any) => void)[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -58,8 +47,9 @@ export const WebSocketProvider: React.FC<{
     }
   };
 
-  const addMessageListener = (callback: (message: any) => void) => {
+  const addMessageListener = (callback: (message: any) => void): (() => void) => {
     listenersRef.current.push(callback);
+    // Return a cleanup function that removes this listener.
     return () => {
       listenersRef.current = listenersRef.current.filter(
         (listener) => listener !== callback

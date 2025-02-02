@@ -8,8 +8,13 @@ import Toolbar from "../components/Toolbar";
 import TextOverlay from "../components/TextOverlay";
 
 const CollageEditor: React.FC = () => {
+  // Canvas ref for Konva
   const stageRef = useRef<Konva.Stage | null>(null);
+  
+  // Get WebSocket send and listener functions
   const { sendMessage, addMessageListener } = useWebSocket();
+
+  // useCollage hook returns functions to modify collage state
   const {
     elements,
     addImage,
@@ -19,6 +24,8 @@ const CollageEditor: React.FC = () => {
     deleteSelected,
     setSelectedId,
   } = useCollage(stageRef);
+
+  // useFilters hook for applying image effects
   const {
     applyGrayscale,
     adjustBrightness,
@@ -33,11 +40,14 @@ const CollageEditor: React.FC = () => {
   const [font, setFont] = useState("Arial");
   const [color, setColor] = useState("#000000");
 
+  // Listen for WebSocket messages for real-time collaboration.
   useEffect(() => {
     const handleWebSocketMessage = (message: any) => {
       if (message.type === "addImage") {
+        // When another user adds an image, add it to the canvas.
         addImage(message.src);
       } else if (message.type === "applyFilter") {
+        // Apply filters coming from collaborators.
         switch (message.filter) {
           case "grayscale":
             applyGrayscale();
@@ -69,10 +79,9 @@ const CollageEditor: React.FC = () => {
       }
     };
 
-    addMessageListener(handleWebSocketMessage);
-
+    const removeListener = addMessageListener(handleWebSocketMessage);
     return () => {
-      addMessageListener(() => {});
+      removeListener();
     };
   }, [
     addMessageListener,
@@ -87,11 +96,13 @@ const CollageEditor: React.FC = () => {
     adjustHue,
   ]);
 
+  // When the user clicks "Add Image", broadcast and update locally.
   const handleAddImage = (src: string) => {
     sendMessage({ type: "addImage", src });
     addImage(src);
   };
 
+  // Similarly, handle filters and text additions.
   const handleApplyFilter = (filter: string, value?: number) => {
     sendMessage({ type: "applyFilter", filter, value });
     switch (filter) {
@@ -137,47 +148,116 @@ const CollageEditor: React.FC = () => {
   };
 
   return (
-    <div>
-      <Toolbar onAddText={handleAddText} />
-      <TextOverlay onChangeFont={handleChangeFont} onChangeColor={handleChangeColor} />
-      <button onClick={() => handleAddImage("image_url_here")}>
-        Add Image
-      </button>
-      <button onClick={() => handleApplyFilter("grayscale")}>Grayscale</button>
-      <button onClick={() => handleApplyFilter("brightness", 0.2)}>
-        Increase Brightness
-      </button>
-      <button onClick={() => handleApplyFilter("blur", 10)}>Blur</button>
-      <button onClick={() => handleApplyFilter("sepia")}>Sepia</button>
-      <button onClick={() => handleApplyFilter("invert")}>Invert</button>
-      <button onClick={() => handleApplyFilter("contrast", 0.5)}>
-        Increase Contrast
-      </button>
-      <button onClick={() => handleApplyFilter("pixelation", 5)}>
-        Pixelate
-      </button>
-      <button onClick={() => handleApplyFilter("hue", 90)}>Adjust Hue</button>
-      <button onClick={undo}>Undo</button>
-      <button onClick={redo}>Redo</button>
-      <button onClick={deleteSelected}>Delete Selected</button>
-
-      <Stage
-        ref={stageRef}
-        width={600}
-        height={400}
-        className="border border-gray-300 mt-4"
-      >
-        <Layer>
-          {elements.map(({ id, node }) => (
-            <node.type
-              key={id}
-              {...node}
-              onClick={() => setSelectedId(id)}
-              draggable
-            />
-          ))}
-        </Layer>
-      </Stage>
+    <div className="p-4">
+      {/* Toolbar Section */}
+      <div className="mb-4">
+        <Toolbar onAddText={handleAddText} />
+      </div>
+      {/* Text Overlay Controls */}
+      <div className="mb-4">
+        <TextOverlay onChangeFont={handleChangeFont} onChangeColor={handleChangeColor} />
+      </div>
+      {/* Action Buttons */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {/* Example button for adding an image.
+            In a real app, replace "image_url_here" with a dynamic URL or file input result. */}
+        <button
+          onClick={() => handleAddImage("image_url_here")}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+        >
+          Add Image
+        </button>
+        <button
+          onClick={() => handleApplyFilter("grayscale")}
+          className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 transition"
+        >
+          Grayscale
+        </button>
+        <button
+          onClick={() => handleApplyFilter("brightness", 0.2)}
+          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+        >
+          Increase Brightness
+        </button>
+        <button
+          onClick={() => handleApplyFilter("blur", 10)}
+          className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
+        >
+          Blur
+        </button>
+        <button
+          onClick={() => handleApplyFilter("sepia")}
+          className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition"
+        >
+          Sepia
+        </button>
+        <button
+          onClick={() => handleApplyFilter("invert")}
+          className="px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600 transition"
+        >
+          Invert
+        </button>
+        <button
+          onClick={() => handleApplyFilter("contrast", 0.5)}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+        >
+          Increase Contrast
+        </button>
+        <button
+          onClick={() => handleApplyFilter("pixelation", 5)}
+          className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition"
+        >
+          Pixelate
+        </button>
+        <button
+          onClick={() => handleApplyFilter("hue", 90)}
+          className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 transition"
+        >
+          Adjust Hue
+        </button>
+      </div>
+      {/* Undo/Redo/Delete Buttons */}
+      <div className="flex space-x-2 mb-4">
+        <button
+          onClick={undo}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+        >
+          Undo
+        </button>
+        <button
+          onClick={redo}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Redo
+        </button>
+        <button
+          onClick={deleteSelected}
+          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+        >
+          Delete Selected
+        </button>
+      </div>
+      {/* Canvas */}
+      <div className="border border-gray-300 rounded-md overflow-hidden">
+        <Stage
+          ref={stageRef}
+          width={600}
+          height={400}
+          className="bg-white"
+        >
+          <Layer>
+            {elements.map(({ id, node }) => (
+              // Render each element on the canvas.
+              <node.type
+                key={id}
+                {...node}
+                onClick={() => setSelectedId(id)}
+                draggable
+              />
+            ))}
+          </Layer>
+        </Stage>
+      </div>
     </div>
   );
 };

@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+// ImageUpload.tsx
+import React, { useState, useRef } from "react";
 
-const ImageUpload: React.FC<{ onUpload: (images: string[]) => void }> = ({
-  onUpload,
-}) => {
+interface ImageUploadProps {
+  onUpload: (images: string[]) => void;
+}
+
+const ImageUpload: React.FC<ImageUploadProps> = ({ onUpload }) => {
+  // previewImages is an array of preview URLs
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -11,13 +16,19 @@ const ImageUpload: React.FC<{ onUpload: (images: string[]) => void }> = ({
     handleFiles(files);
   };
 
-  const handleFiles = async (files: FileList | File[]) => {
+  const handleFiles = async (files: File[] | FileList) => {
     const formData = new FormData();
-    Array.from(files).forEach((file: any) => formData.append("images", file));
+    // Ensure we convert FileList to an Array if needed.
+    const fileArray = Array.isArray(files) ? files : Array.from(files);
+    
+    // Use the key "file" (which matches your backend's middleware)
+    fileArray.forEach((file) => {
+      formData.append("file", file);
+    });
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/upload`,
+        `${import.meta.env.VITE_BACKEND_URL}/upload`,
         {
           method: "POST",
           body: formData,
@@ -25,38 +36,54 @@ const ImageUpload: React.FC<{ onUpload: (images: string[]) => void }> = ({
       );
 
       if (response.ok) {
-        const uploadedImages = await response.json();
-        setPreviewImages(uploadedImages);
-        onUpload(uploadedImages);
+        const data = await response.json();
+        // data.previewPaths is expected to be an array.
+        const previews: string[] = data.previewPaths || [];
+        setPreviewImages(previews);
+        // Call the onUpload callback to pass the preview URLs up to the parent.
+        onUpload(previews);
+      } else {
+        console.error("Upload failed with status", response.status);
       }
     } catch (error) {
       console.error("Upload failed", error);
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
-      className="border-2 border-dashed p-4 text-center cursor-pointer"
+      onClick={handleClick}
+      className="border-2 border-dashed p-4 text-center cursor-pointer hover:bg-gray-100 transition"
     >
-      <p>Drag & drop images here or click to select</p>
+      <p>Drag & drop an image here or click to select</p>
       <input
+        ref={fileInputRef}
         type="file"
-        multiple
-        onChange={(e) => handleFiles(e.target.files || [])}
+        onChange={handleInputChange}
         className="hidden"
       />
-      <div className="mt-2 flex flex-wrap gap-2">
+      {/* <div className="mt-2 flex flex-wrap gap-2 justify-center">
         {previewImages.map((src, index) => (
           <img
             key={index}
             src={src}
             alt="Preview"
-            className="w-20 h-20 object-cover"
+            className="w-20 h-20 object-cover rounded"
           />
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };

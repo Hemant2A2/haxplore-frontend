@@ -23,11 +23,11 @@ const App: React.FC = () => {
         }
       />
       <Route
-        path="/editor:collageId"
+        path="/editor/:collageId"
         element={
           <ProtectedRoute>
             <WebSocketProvider
-              url={`{import.meta.env.VITE_WEBSOCKET_URL}/collaborate`}
+              url="ws://localhost:9000"
             >
               <Editor />
             </WebSocketProvider>
